@@ -1,0 +1,330 @@
+set_property BITSTREAM.GENERAL.COMPRESS FALSE [current_design]
+
+#-----------------------10MHz-----------------------#
+#set_property IOSTANDARD LVCMOS33 [get_ports EXT_10M_TTL_PI]
+#set_property PACKAGE_PIN Y7 [get_ports EXT_10M_TTL_PI]
+
+#set_property IOSTANDARD LVCMOS33 [get_ports CV_10MHz_FO]
+#set_property PACKAGE_PIN W10 [get_ports CV_10MHz_FO]
+
+#-----------------------JTAG-----------------------#
+set_property IOSTANDARD LVCMOS33 [get_ports PJTAG_TMS]
+set_property PACKAGE_PIN C15 [get_ports PJTAG_TMS] 
+set_property IOSTANDARD LVCMOS33 [get_ports PJTAG_TDO]
+set_property PACKAGE_PIN A16 [get_ports PJTAG_TDO] 
+set_property IOSTANDARD LVCMOS33 [get_ports PJTAG_TDI]
+set_property PACKAGE_PIN B16 [get_ports PJTAG_TDI]  
+set_property IOSTANDARD LVCMOS33 [get_ports PJTAG_TCK]
+set_property PACKAGE_PIN B15 [get_ports PJTAG_TCK] 
+
+#-----------------------PHY-----------------------#
+set_property PACKAGE_PIN AA21 [get_ports phy_8521_1_txd[0]]
+set_property PACKAGE_PIN AB22 [get_ports phy_8521_1_txd[1]]
+set_property PACKAGE_PIN Y20  [get_ports phy_8521_1_txd[2]]
+set_property PACKAGE_PIN AB21 [get_ports phy_8521_1_txd[3]]
+set_property PACKAGE_PIN AA22 [get_ports phy_8521_1_tctrl]
+set_property PACKAGE_PIN Y21  [get_ports phy_8521_1_tclk]
+set_property PACKAGE_PIN U22 [get_ports phy_8521_1_rxd[0]]
+set_property PACKAGE_PIN W21 [get_ports phy_8521_1_rxd[1]] 
+set_property PACKAGE_PIN W22 [get_ports phy_8521_1_rxd[2]]
+set_property PACKAGE_PIN W20 [get_ports phy_8521_1_rxd[3]] 
+set_property PACKAGE_PIN U21 [get_ports phy_8521_1_rctrl]
+set_property PACKAGE_PIN W17 [get_ports phy_8521_1_rclk]
+
+set_property PACKAGE_PIN U19 [get_ports phy_8521_nrst1]
+#set_property PACKAGE_PIN U20 [get_ports phy_8521_1_xtal25m]
+#set_property PACKAGE_PIN G15 [get_ports phy_xtal25m_2]                                     #delete#
+############################################################
+# RX Clock period Constraints (per instance)               #
+############################################################
+# Receiver clock period constraints: please do not relax
+create_clock -period 8.000 [get_ports phy_8521_1_rclk]
+############################################################
+#set_property IOSTANDARD LVCMOS33 [get_ports phy_8521_1_xtal25m]
+#set_property IOSTANDARD LVCMOS33 [get_ports phy_xtal25m_2]
+set_property IOSTANDARD LVCMOS33 [get_ports phy_8521_nrst1]
+set_property IOSTANDARD LVCMOS33 [get_ports phy_8521_1_tclk]
+set_property IOSTANDARD LVCMOS33 [get_ports phy_8521_1_rclk]
+set_property IOSTANDARD LVCMOS33 [get_ports phy_8521_1_txd[0]]
+set_property IOSTANDARD LVCMOS33 [get_ports phy_8521_1_txd[1]]
+set_property IOSTANDARD LVCMOS33 [get_ports phy_8521_1_txd[2]]
+set_property IOSTANDARD LVCMOS33 [get_ports phy_8521_1_txd[3]]
+set_property IOSTANDARD LVCMOS33 [get_ports phy_8521_1_tctrl]
+set_property IOSTANDARD LVCMOS33 [get_ports phy_8521_1_rxd[0]]
+set_property IOSTANDARD LVCMOS33 [get_ports phy_8521_1_rxd[1]]
+set_property IOSTANDARD LVCMOS33 [get_ports phy_8521_1_rxd[2]]
+set_property IOSTANDARD LVCMOS33 [get_ports phy_8521_1_rxd[3]]
+set_property IOSTANDARD LVCMOS33 [get_ports phy_8521_1_rctrl]
+set_property SLEW FAST [get_ports phy_8521_1_txd[0]]
+set_property SLEW FAST [get_ports phy_8521_1_txd[1]]
+set_property SLEW FAST [get_ports phy_8521_1_txd[2]]
+set_property SLEW FAST [get_ports phy_8521_1_txd[3]]
+set_property SLEW FAST [get_ports phy_8521_1_tctrl]
+set_property SLEW FAST [get_ports phy_8521_1_tclk]
+
+set_property PACKAGE_PIN P15     [get_ports rgmii1_mdc]
+set_property PACKAGE_PIN R15     [get_ports rgmii1_mdio]
+set_property IOSTANDARD LVCMOS33 [get_ports rgmii1_mdc]
+set_property IOSTANDARD LVCMOS33 [get_ports rgmii1_mdio]
+
+set_false_path -from [get_cells -hier -filter {name =~ *phy_resetn_int_reg}] -to [get_cells -hier -filter {name =~ *axi_lite_reset_gen/reset_sync*}]
+set_false_path -to [get_pins -filter {REF_PIN_NAME =~ PRE} -of [get_cells -hier -regexp {.*\/reset_sync.*}]]
+set_false_path -to [get_pins -filter {REF_PIN_NAME =~ D} -of [get_cells -hier -regexp {.*\/.*_sync.*}]]
+set_max_delay -datapath_only -from [get_cells -hier -filter {name =~ *rx_fifo_i/rd_addr_reg[*]}] -to [get_cells -hier -filter {name =~ *fifo*wr_rd_addr_reg[*]}] 3.200
+set_max_delay -datapath_only -from [get_cells -hier -filter {name =~ *rx_fifo_i/wr_store_frame_tog_reg}] -to [get_cells -hier -filter {name =~ *fifo_i/resync_wr_store_frame_tog/data_sync_reg0}] 3.200
+set_max_delay -datapath_only -from [get_cells -hier -filter {name =~ *rx_fifo_i/update_addr_tog_reg}] -to [get_cells -hier -filter {name =~ *rx_fifo_i/sync_rd_addr_tog/data_sync_reg0}] 3.200
+set_max_delay -datapath_only -from [get_cells -hier -filter {name =~ *tx_fifo_i/rd_addr_txfer_reg[*]}] -to [get_cells -hier -filter {name =~ *fifo*wr_rd_addr_reg[*]}] 3.200
+set_max_delay -datapath_only -from [get_cells -hier -filter {name =~ *tx_fifo_i/wr_frame_in_fifo_reg}] -to [get_cells -hier -filter {name =~ *tx_fifo_i/resync_wr_frame_in_fifo/data_sync_reg0}] 3.200
+set_max_delay -datapath_only -from [get_cells -hier -filter {name =~ *tx_fifo_i/wr_frames_in_fifo_reg}] -to [get_cells -hier -filter {name =~ *tx_fifo_i/resync_wr_frames_in_fifo/data_sync_reg0}] 3.200
+set_max_delay -datapath_only -from [get_cells -hier -filter {name =~ *tx_fifo_i/frame_in_fifo_valid_tog_reg}] -to [get_cells -hier -filter {name =~ *tx_fifo_i/resync_fif_valid_tog/data_sync_reg0}] 3.200
+set_max_delay -datapath_only -from [get_cells -hier -filter {name =~ *tx_fifo_i/rd_txfer_tog_reg}] -to [get_cells -hier -filter {name =~ *tx_fifo_i/resync_rd_txfer_tog/data_sync_reg0}] 3.200
+set_max_delay -datapath_only -from [get_cells -hier -filter {name =~ *tx_fifo_i/rd_tran_frame_tog_reg}] -to [get_cells -hier -filter {name =~ *tx_fifo_i/resync_rd_tran_frame_tog/data_sync_reg0}] 3.200
+set_power_opt -exclude_cells [get_cells -hierarchical -filter { PRIMITIVE_TYPE =~ *.bram.* }]
+
+set_property IOSTANDARD LVCMOS33 [get_ports e2rom_sda]
+set_property PACKAGE_PIN H20     [get_ports e2rom_sda]
+set_property IOSTANDARD LVCMOS33 [get_ports e2rom_scl]
+set_property PACKAGE_PIN H22     [get_ports e2rom_scl]
+
+
+#EXT IO#
+set_property IOSTANDARD LVCMOS33 [get_ports EXT_10MHz_TTL_FI]
+set_property PACKAGE_PIN M19 [get_ports EXT_10MHz_TTL_FI]           ##
+set_property IOSTANDARD LVCMOS33 [get_ports EXT_1PPS_FI]
+set_property PACKAGE_PIN J21 [get_ports EXT_PPS_FI]                 ##               
+
+ #-----------------------RUB IOs-----------------------#
+set_property IOSTANDARD LVCMOS33 [get_ports RU_10MHz_TTL_FI]
+set_property PACKAGE_PIN L18 [get_ports RU_10MHz_TTL_FI]            ##
+set_property IOSTANDARD LVCMOS33 [get_ports RU_PPS_OUT]
+set_property PACKAGE_PIN P18 [get_ports RU_PPS_OUT]                 
+set_property IOSTANDARD LVCMOS33 [get_ports RU_PPS_IN]
+set_property PACKAGE_PIN T17 [get_ports RU_PPS_IN]                  
+set_property IOSTANDARD LVCMOS33 [get_ports RU_LOCK_BK]
+set_property PACKAGE_PIN W5 [get_ports RU_LOCK_BK]
+#RUB 232 UART
+set_property PACKAGE_PIN P16  [get_ports RU_RS232_TX]
+set_property PACKAGE_PIN U15  [get_ports RU_RS232_RX]
+set_property IOSTANDARD LVCMOS33  [get_ports RU_RS232_TX]
+set_property IOSTANDARD LVCMOS33  [get_ports RU_RS232_RX]
+
+#set_property IOSTANDARD LVCMOS33 [get_ports OCXO_SYC_CTL]
+#set_property PACKAGE_PIN J16 [get_ports OCXO_SYC_CTL]
+ #-----------------------DDS IOs-----------------------# 
+set_property PACKAGE_PIN F18 [get_ports DDS_2p048M_FI]         ##      
+set_property IOSTANDARD LVCMOS33 [get_ports DDS_2p048M_FI]     ## 
+set_property PACKAGE_PIN F19 [get_ports DDS_RST_FO]            ##
+set_property PACKAGE_PIN D18 [get_ports DDS_DRE_FO]            ## 
+set_property PACKAGE_PIN E20 [get_ports DDS_SDO_FO]            ## 
+set_property PACKAGE_PIN E21 [get_ports DDS_SDIO_FO]           ## 
+set_property PACKAGE_PIN D20 [get_ports DDS_UPC_FO]            ## 
+set_property PACKAGE_PIN D21 [get_ports DDS_SCLK_FO]           ## 
+set_property PACKAGE_PIN H19 [get_ports DDS_CS_FO]             ## 
+set_property PACKAGE_PIN C19 [get_ports DDS_frequnce_select]   ##  
+set_property IOSTANDARD LVCMOS33 [get_ports DDS_RST_FO]        
+set_property IOSTANDARD LVCMOS33 [get_ports DDS_DRE_FO]
+set_property IOSTANDARD LVCMOS33 [get_ports DDS_SDO_FO]
+set_property IOSTANDARD LVCMOS33 [get_ports DDS_SDIO_FO]
+set_property IOSTANDARD LVCMOS33 [get_ports DDS_UPC_FO]
+set_property IOSTANDARD LVCMOS33 [get_ports DDS_SCLK_FO]
+set_property IOSTANDARD LVCMOS33 [get_ports DDS_CS_FO]
+set_property IOSTANDARD LVCMOS33 [get_ports DDS_frequnce_select]
+ #-----------------------TDC IOs-----------------------# 
+#正常连接
+# set_property -dict {PACKAGE_PIN J16   IOSTANDARD LVCMOS33}  [get_ports TDC1_SCK_FO     ]
+# set_property -dict {PACKAGE_PIN H17   IOSTANDARD LVCMOS33}  [get_ports TDC1_SI_FO      ]
+# set_property -dict {PACKAGE_PIN K14   IOSTANDARD LVCMOS33}  [get_ports TDC1_SO_FI      ]
+# set_property -dict {PACKAGE_PIN K19   IOSTANDARD LVCMOS33}  [get_ports TDC1_RSTN_FO    ]
+
+# set_property -dict {PACKAGE_PIN H15   IOSTANDARD LVCMOS33}  [get_ports MS1022_SSN_I_FO_CH1    ]
+# set_property -dict {PACKAGE_PIN L14   IOSTANDARD LVCMOS33}  [get_ports TDC_START_FO_CH1    ]
+# set_property -dict {PACKAGE_PIN L19   IOSTANDARD LVCMOS33}  [get_ports TDC_STOP1_FO_CH1    ]
+# set_property -dict {PACKAGE_PIN H16   IOSTANDARD LVCMOS33}  [get_ports MS1022_INT_O_FI_CH1    ] 
+
+
+# set_property -dict {PACKAGE_PIN R18   IOSTANDARD LVCMOS33}  [get_ports TDC_SCK_FO     ]
+# set_property -dict {PACKAGE_PIN R16   IOSTANDARD LVCMOS33}  [get_ports TDC_SI_FO      ]
+# set_property -dict {PACKAGE_PIN U20   IOSTANDARD LVCMOS33}  [get_ports TDC_SO_FI      ]
+# set_property -dict {PACKAGE_PIN T20   IOSTANDARD LVCMOS33}  [get_ports TDC_RSTN_FO    ]
+
+# set_property -dict {PACKAGE_PIN P16   IOSTANDARD LVCMOS33}  [get_ports MS1022_SSN_I_FO_CH2    ]
+# set_property -dict {PACKAGE_PIN W18   IOSTANDARD LVCMOS33}  [get_ports TDC_START_FO_CH2    ]
+# set_property -dict {PACKAGE_PIN N17   IOSTANDARD LVCMOS33}  [get_ports TDC_STOP1_FO_CH2    ]
+# set_property -dict {PACKAGE_PIN P15   IOSTANDARD LVCMOS33}  [get_ports MS1022_INT_O_FI_CH2    ]
+
+# tdc 1和2 交换
+set_property -dict {PACKAGE_PIN T18   IOSTANDARD LVCMOS33}  [get_ports TDC1_SCK_FO     ]             ##
+set_property -dict {PACKAGE_PIN T19   IOSTANDARD LVCMOS33}  [get_ports TDC1_SI_FO      ]             ##
+set_property -dict {PACKAGE_PIN Y16   IOSTANDARD LVCMOS33}  [get_ports TDC1_SO_FI      ]             ##                  
+set_property -dict {PACKAGE_PIN U14  IOSTANDARD LVCMOS33}  [get_ports TDC1_RSTN_FO    ]              ##
+
+set_property -dict {PACKAGE_PIN W16  IOSTANDARD LVCMOS33}  [get_ports MS1022_SSN_I_FO_CH1    ]      ##
+set_property -dict {PACKAGE_PIN V20   IOSTANDARD LVCMOS33}  [get_ports TDC_START_FO_CH1    ]        ##
+set_property -dict {PACKAGE_PIN V22  IOSTANDARD LVCMOS33}  [get_ports TDC_STOP1_FO_CH1    ]         ##  
+set_property -dict {PACKAGE_PIN AA19   IOSTANDARD LVCMOS33}  [get_ports MS1022_INT_O_FI_CH1    ]    ##
+
+#set_property -dict {PACKAGE_PIN J16   IOSTANDARD LVCMOS33}  [get_ports TDC_SCK_FO     ]                #delete#
+#set_property -dict {PACKAGE_PIN H17   IOSTANDARD LVCMOS33}  [get_ports TDC_SI_FO      ]                #delete#
+#set_property -dict {PACKAGE_PIN K14   IOSTANDARD LVCMOS33}  [get_ports TDC_SO_FI      ]                #delete#
+#set_property -dict {PACKAGE_PIN K19   IOSTANDARD LVCMOS33}  [get_ports TDC_RSTN_FO    ]                #delete#
+
+#set_property -dict {PACKAGE_PIN H15   IOSTANDARD LVCMOS33}  [get_ports MS1022_SSN_I_FO_CH2    ]        #delete#
+#set_property -dict {PACKAGE_PIN L14   IOSTANDARD LVCMOS33}  [get_ports TDC_START_FO_CH2    ]           #delete#
+#set_property -dict {PACKAGE_PIN L19   IOSTANDARD LVCMOS33}  [get_ports TDC_STOP1_FO_CH2    ]           #delete#
+#set_property -dict {PACKAGE_PIN H16   IOSTANDARD LVCMOS33}  [get_ports MS1022_INT_O_FI_CH2    ]        #delete#
+
+ #-----------------------GNSS IOs-----------------------#
+#set_property -dict {PACKAGE_PIN G17   IOSTANDARD LVCMOS33}  [get_ports SEP_1PPS_IN  ]                   #delete#
+set_property -dict {PACKAGE_PIN T19  IOSTANDARD LVCMOS33}  [get_ports RCVR_JT_1PPS  ]   
+set_property -dict {PACKAGE_PIN W6   IOSTANDARD LVCMOS33}  [get_ports RCVR_nRESET_FO] 
+ #GNSS TTL UART
+set_property -dict {PACKAGE_PIN T4   IOSTANDARD LVCMOS33}  [get_ports RCVR_GNSS_TX1 ] 
+set_property -dict {PACKAGE_PIN U4   IOSTANDARD LVCMOS33}  [get_ports RCVR_GNSS_RX1 ] 
+set_property -dict {PACKAGE_PIN U5   IOSTANDARD LVCMOS33}  [get_ports RCVR_GNSS_TX2 ] 
+set_property -dict {PACKAGE_PIN V5   IOSTANDARD LVCMOS33}  [get_ports RCVR_GNSS_RX2 ] 
+
+ #-----------------------1PPS IOs-----------------------#
+set_property -dict {PACKAGE_PIN H15   IOSTANDARD LVCMOS33}  [get_ports Out_PPS1 ]
+set_property -dict {PACKAGE_PIN J15   IOSTANDARD LVCMOS33}  [get_ports Out_PPS2 ]
+set_property -dict {PACKAGE_PIN K15   IOSTANDARD LVCMOS33}  [get_ports Out_PPS3 ] 
+set_property -dict {PACKAGE_PIN J16   IOSTANDARD LVCMOS33}  [get_ports Out_PPS4 ]
+set_property -dict {PACKAGE_PIN J17   IOSTANDARD LVCMOS33}  [get_ports Out_PPS5 ]
+set_property -dict {PACKAGE_PIN K16   IOSTANDARD LVCMOS33}  [get_ports Out_PPS6 ]
+set_property -dict {PACKAGE_PIN L16   IOSTANDARD LVCMOS33}  [get_ports Out_PPS7 ]
+set_property -dict {PACKAGE_PIN L17   IOSTANDARD LVCMOS33}  [get_ports Out_PPS8 ]
+set_property -dict {PACKAGE_PIN M17   IOSTANDARD LVCMOS33}  [get_ports Out_PPS9 ]
+set_property -dict {PACKAGE_PIN N17   IOSTANDARD LVCMOS33}  [get_ports Out_PPS10]
+set_property -dict {PACKAGE_PIN N18   IOSTANDARD LVCMOS33}  [get_ports Out_PPS11]
+set_property -dict {PACKAGE_PIN M15   IOSTANDARD LVCMOS33}  [get_ports Out_PPS12] 
+set_property -dict {PACKAGE_PIN M16   IOSTANDARD LVCMOS33}  [get_ports Out_PPS13] 
+set_property -dict {PACKAGE_PIN J18   IOSTANDARD LVCMOS33}  [get_ports Out_PPS14] 
+set_property -dict {PACKAGE_PIN K18   IOSTANDARD LVCMOS33}  [get_ports Out_PPS15] 
+set_property -dict {PACKAGE_PIN J21   IOSTANDARD LVCMOS33}  [get_ports Out_PPS16] 
+set_property -dict {PACKAGE_PIN J22   IOSTANDARD LVCMOS33}  [get_ports Out_PPS17] 
+set_property -dict {PACKAGE_PIN J20   IOSTANDARD LVCMOS33}  [get_ports Out_PPS18]  
+set_property -dict {PACKAGE_PIN K21   IOSTANDARD LVCMOS33}  [get_ports Out_PPS19] 
+set_property -dict {PACKAGE_PIN L21   IOSTANDARD LVCMOS33}  [get_ports Out_PPS20]
+set_property -dict {PACKAGE_PIN L22   IOSTANDARD LVCMOS33}  [get_ports Out_PPS21] 
+#PPS22 M21 
+set_property -dict {PACKAGE_PIN M21   IOSTANDARD LVCMOS33}  [get_ports Out_PPS22]
+#PPS23 M22 
+set_property -dict {PACKAGE_PIN M22   IOSTANDARD LVCMOS33}  [get_ports Out_PPS23] 
+
+set_property -dict {PACKAGE_PIN N22   IOSTANDARD LVCMOS33}  [get_ports Out_PPS24]  
+set_property -dict {PACKAGE_PIN P22   IOSTANDARD LVCMOS33}  [get_ports Out_PPS25] 
+set_property -dict {PACKAGE_PIN R20   IOSTANDARD LVCMOS33}  [get_ports Out_PPS26] 
+set_property -dict {PACKAGE_PIN R21   IOSTANDARD LVCMOS33}  [get_ports Out_PPS27] 
+set_property -dict {PACKAGE_PIN P20   IOSTANDARD LVCMOS33}  [get_ports Out_PPS28] 
+set_property -dict {PACKAGE_PIN P21   IOSTANDARD LVCMOS33}  [get_ports Out_PPS29]
+set_property -dict {PACKAGE_PIN N15   IOSTANDARD LVCMOS33}  [get_ports Out_PPS30]
+set_property IOSTANDARD LVCMOS33 [get_ports OUT_TEST_PPS]
+set_property PACKAGE_PIN T18 [get_ports OUT_TEST_PPS]
+#set_property IOSTANDARD LVCMOS33 [get_ports CV_Local_PPS_PO]
+#set_property PACKAGE_PIN M14 [get_ports CV_Local_PPS_PO]
+#set_property IOSTANDARD LVCMOS33 [get_ports EXT_1PPS_IN]
+#set_property PACKAGE_PIN J15 [get_ports EXT_1PPS_IN]
+
+set_property IOSTANDARD LVCMOS33 [get_ports STW_1PPS_TTL_IN]
+set_property PACKAGE_PIN Y11 [get_ports STW_1PPS_TTL_IN]
+
+ #-----------------------UART IOs-----------------------#
+# set_property IOSTANDARD LVCMOS33 [get_ports REF_TOD_IN]
+# set_property PACKAGE_PIN V16 [get_ports REF_TOD_IN]
+# set_property IOSTANDARD LVCMOS33 [get_ports DEBUG_RX]
+# set_property PACKAGE_PIN W19 [get_ports DEBUG_RX]
+# set_property IOSTANDARD LVCMOS33 [get_ports DEBUG_TX]
+# set_property PACKAGE_PIN V18 [get_ports DEBUG_TX]
+
+#set_property PACKAGE_PIN P20  [get_ports SMS_DI]   #delete 短报文串口#
+#set_property PACKAGE_PIN N20  [get_ports SMS_DO]
+#set_property IOSTANDARD LVCMOS33  [get_ports SMS_DI]
+#set_property IOSTANDARD LVCMOS33  [get_ports SMS_DO]
+#UART1
+            ##跟外部串口1连接##
+set_property IOSTANDARD LVCMOS33  [get_ports UART1_TTL_TX] 
+set_property PACKAGE_PIN J22  [get_ports EXT_UART1_TTL_TX]          ##   
+set_property IOSTANDARD LVCMOS33  [get_ports UART1_TTL_RX] 
+set_property PACKAGE_PIN E18  [get_ports EXT_UART1_TTL_RX]          ##
+#UART2
+            ##跟外部串口2连接##
+set_property IOSTANDARD LVCMOS33  [get_ports UART2_TTL_TX]
+set_property PACKAGE_PIN F17  [get_ports UART2_TTL_TX]              ##
+set_property IOSTANDARD LVCMOS33  [get_ports UART2_TTL_RX] 
+set_property PACKAGE_PIN D17  [get_ports UART2_TTL_RX]              ##
+#UART3          
+            ##跟接收机子卡连接##
+set_property IOSTANDARD LVCMOS33  [get_ports UART3_TTL_TX] 
+set_property PACKAGE_PIN N22  [get_ports UART_TX_PO]                ##
+set_property IOSTANDARD LVCMOS33  [get_ports UART3_TTL_RX]
+set_property PACKAGE_PIN P20  [get_ports UART_RX_PI]                ##
+
+set_property -dict {PACKAGE_PIN F16   IOSTANDARD LVCMOS33}  [get_ports Out_TOD1 ]  
+set_property -dict {PACKAGE_PIN E16   IOSTANDARD LVCMOS33}  [get_ports Out_TOD2 ]  
+set_property -dict {PACKAGE_PIN D16   IOSTANDARD LVCMOS33}  [get_ports Out_TOD3 ]  
+set_property -dict {PACKAGE_PIN D17   IOSTANDARD LVCMOS33}  [get_ports Out_TOD4 ]  
+set_property -dict {PACKAGE_PIN E15   IOSTANDARD LVCMOS33}  [get_ports Out_TOD5 ]  
+set_property -dict {PACKAGE_PIN D15   IOSTANDARD LVCMOS33}  [get_ports Out_TOD6 ]  
+set_property -dict {PACKAGE_PIN G15   IOSTANDARD LVCMOS33}  [get_ports Out_TOD7 ]  
+set_property -dict {PACKAGE_PIN F18   IOSTANDARD LVCMOS33}  [get_ports Out_TOD8 ]  
+set_property -dict {PACKAGE_PIN E18   IOSTANDARD LVCMOS33}  [get_ports Out_TOD9 ]  
+set_property -dict {PACKAGE_PIN F17   IOSTANDARD LVCMOS33}  [get_ports Out_TOD10]  
+set_property -dict {PACKAGE_PIN B17   IOSTANDARD LVCMOS33}  [get_ports Out_TOD11 ]  
+set_property -dict {PACKAGE_PIN A17   IOSTANDARD LVCMOS33}  [get_ports Out_TOD12 ]  
+set_property -dict {PACKAGE_PIN A18   IOSTANDARD LVCMOS33}  [get_ports Out_TOD13 ]  
+set_property -dict {PACKAGE_PIN A19   IOSTANDARD LVCMOS33}  [get_ports Out_TOD14 ]  
+set_property -dict {PACKAGE_PIN A21   IOSTANDARD LVCMOS33}  [get_ports Out_TOD15 ]  
+set_property -dict {PACKAGE_PIN A22   IOSTANDARD LVCMOS33}  [get_ports Out_TOD16 ]  
+set_property -dict {PACKAGE_PIN D22   IOSTANDARD LVCMOS33}  [get_ports Out_TOD17 ]  
+set_property -dict {PACKAGE_PIN C22   IOSTANDARD LVCMOS33}  [get_ports Out_TOD18 ]  
+set_property -dict {PACKAGE_PIN E21   IOSTANDARD LVCMOS33}  [get_ports Out_TOD19 ]  
+set_property -dict {PACKAGE_PIN D21   IOSTANDARD LVCMOS33}  [get_ports Out_TOD20]  
+set_property -dict {PACKAGE_PIN B21   IOSTANDARD LVCMOS33}  [get_ports Out_TOD21 ]  
+set_property -dict {PACKAGE_PIN B22   IOSTANDARD LVCMOS33}  [get_ports Out_TOD22 ]  
+set_property -dict {PACKAGE_PIN H19   IOSTANDARD LVCMOS33}  [get_ports Out_TOD23 ]  
+set_property -dict {PACKAGE_PIN G19   IOSTANDARD LVCMOS33}  [get_ports Out_TOD24 ]  
+set_property -dict {PACKAGE_PIN F19   IOSTANDARD LVCMOS33}  [get_ports Out_TOD25 ]  
+set_property -dict {PACKAGE_PIN E19   IOSTANDARD LVCMOS33}  [get_ports Out_TOD26 ]  
+set_property -dict {PACKAGE_PIN E20   IOSTANDARD LVCMOS33}  [get_ports Out_TOD27 ]  
+set_property -dict {PACKAGE_PIN G20   IOSTANDARD LVCMOS33}  [get_ports Out_TOD28 ]  
+set_property -dict {PACKAGE_PIN G21   IOSTANDARD LVCMOS33}  [get_ports Out_TOD29 ]  
+set_property -dict {PACKAGE_PIN F21   IOSTANDARD LVCMOS33}  [get_ports Out_TOD30]  
+
+ #-----------------------BDC IOs-----------------------#
+ #EXT_PPS_O_PO_1_4
+#set_property IOSTANDARD LVCMOS33 [get_ports Local_BDC_PO]                                  #delete#
+#set_property PACKAGE_PIN P14 [get_ports Local_BDC_PO]                                      #delete#
+set_property IOSTANDARD LVCMOS33 [get_ports Out_BDC1] 
+set_property PACKAGE_PIN Y16 [get_ports Out_BDC1]     
+set_property IOSTANDARD LVCMOS33 [get_ports Out_BDC2]  
+set_property PACKAGE_PIN W13 [get_ports Out_BDC2]     
+set_property IOSTANDARD LVCMOS33 [get_ports Out_BDC3]
+set_property PACKAGE_PIN V15 [get_ports Out_BDC3]    
+set_property IOSTANDARD LVCMOS33 [get_ports Out_BDC4]
+set_property PACKAGE_PIN V14 [get_ports Out_BDC4]    
+set_property IOSTANDARD LVCMOS33 [get_ports Out_BDC5]
+set_property PACKAGE_PIN AB14 [get_ports Out_BDC5]   
+set_property IOSTANDARD LVCMOS33 [get_ports Out_BDC6]
+set_property PACKAGE_PIN Y14 [get_ports Out_BDC6]  
+
+#------ ----------------  ad5663  ---------------------#
+#set_property -dict {PACKAGE_PIN T9   IOSTANDARD LVCMOS33} [get_ports AD5663_mosi_O]        #delete#
+#set_property -dict {PACKAGE_PIN U10  IOSTANDARD LVCMOS33} [get_ports AD5663_sck_O ]        #delete#
+#set_property -dict {PACKAGE_PIN U9   IOSTANDARD LVCMOS33} [get_ports AD5663_cs_O  ]        #delete#
+#set_property -dict {PACKAGE_PIN Y12  IOSTANDARD LVCMOS33} [get_ports AD5663_LDAC_O]        #delete#
+
+#------ ----------------  sw_10M  ---------------------#
+#set_property -dict {PACKAGE_PIN M17  IOSTANDARD LVCMOS33} [get_ports SW_CTRL1     ]
+#set_property -dict {PACKAGE_PIN J14  IOSTANDARD LVCMOS33} [get_ports SW_CTRL2     ]
+
+#-----------------------  rtc IOs  ---------------------#
+set_property PACKAGE_PIN U6 [get_ports dprtc_int] 
+set_property PACKAGE_PIN R7 [get_ports dprtc_scl] 
+set_property PACKAGE_PIN T6 [get_ports dprtc_sda] 
+set_property IOSTANDARD LVCMOS33 [get_ports dprtc_int] 
+set_property IOSTANDARD LVCMOS33 [get_ports dprtc_scl]
+set_property IOSTANDARD LVCMOS33 [get_ports dprtc_sda]
+
+set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets u_sync_golbal_mmcm/clkin1_bufg]
+#set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets RCVR_JT_1PPS_IBUF]
+#set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets TDC_STOP1_FO_CH2_OBUF]
+set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets TDC_STOP1_FO_CH1_OBUF]

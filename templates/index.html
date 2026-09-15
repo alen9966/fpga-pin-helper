@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FPGA 引脚对照助手</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <div class="mark">PL</div>
+      <div>
+        <h1>FPGA 引脚对照助手</h1>
+        <p class="sub">核心板 Vivado 引脚 ↔ 底板功能 · 约束核对</p>
+      </div>
+    </div>
+    <div class="file-bar">
+      <label class="btn file-btn">
+        选择两个 Excel
+        <input id="fileInput" type="file" accept=".xlsx,.xls" multiple hidden />
+      </label>
+      <button id="sampleBtn" class="btn ghost" type="button">加载当前示例</button>
+      <label class="btn file-btn">
+        上传约束文件
+        <input id="xdcInput" type="file" accept=".xdc,.txt,.XDC" hidden />
+      </label>
+      <button id="sampleXdcBtn" class="btn ghost" type="button">核对示例约束</button>
+      <a class="btn ghost" href="/changelog" target="_blank" rel="noopener">更新日志</a>
+      <span id="fileStatus" class="status"></span>
+    </div>
+  </header>
+
+  <section class="toolbar hidden" id="toolbar">
+    <div class="detect" id="detectLine"></div>
+    <div class="search-row">
+      <input id="searchInput" type="search" placeholder="搜索功能、引脚、BANK、焊盘… 多个词满足任一即可" autocomplete="off" />
+      <span id="resultCount" class="count"></span>
+    </div>
+    <div class="filters">
+      <div class="filter-group" id="bankFilters"></div>
+      <div class="filter-group">
+        <button class="chip on" data-scope="matched" type="button">已连接</button>
+        <button class="chip" data-scope="unrouted" type="button">未引出</button>
+        <button class="chip" data-scope="base_other" type="button">底板其他</button>
+        <button class="chip" data-scope="fpga_other" type="button">核心板其他</button>
+      </div>
+    </div>
+    <div class="stats" id="statsLine"></div>
+  </section>
+
+  <main>
+    <p id="emptyHint" class="hint">请选择核心板、底板各一份引脚表，或点击「加载当前示例」。</p>
+    <p id="errorBox" class="error hidden"></p>
+    <div id="tableWrap" class="table-wrap hidden">
+      <table>
+        <thead>
+          <tr>
+            <th>底板功能</th>
+            <th>PACKAGE_PIN</th>
+            <th>IO 名称</th>
+            <th>BANK</th>
+            <th>连接器脚</th>
+            <th>核心板丝印</th>
+            <th>类别</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div id="reviewWrap" class="review-wrap hidden">
+      <div class="review-head">
+        <h2 id="reviewTitle">约束核对</h2>
+        <div class="review-actions">
+          <button id="downloadXdcBtn" class="btn" type="button">下载带批注文本</button>
+        </div>
+      </div>
+      <div class="stats" id="reviewStats"></div>
+      <div class="filter-group" id="reviewFilters">
+        <button class="chip on" data-review="all" type="button">全部行</button>
+        <button class="chip" data-review="正确" type="button">正确</button>
+        <button class="chip" data-review="错误" type="button">错误</button>
+        <button class="chip" data-review="多余" type="button">多余</button>
+        <button class="chip" data-review="missing" type="button">底板未约束</button>
+      </div>
+      <pre id="reviewPre" class="xdc-view"></pre>
+      <div id="missingBox" class="missing-box hidden"></div>
+    </div>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
