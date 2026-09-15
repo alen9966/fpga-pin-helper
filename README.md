@@ -4,6 +4,8 @@
 
 在线地址：https://alen9966.github.io/fpga-pin-helper/
 
+使用说明：https://alen9966.github.io/fpga-pin-helper/使用说明.html
+
 ## 用法
 
 1. 打开上面的 GitHub Pages 地址，或本机双击 `启动.bat`。

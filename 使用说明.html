@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>使用说明 · FPGA 引脚对照助手</title>
+  <link rel="stylesheet" href="static/style.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <div class="mark">PL</div>
+      <div>
+        <h1>使用说明</h1>
+        <p class="sub">FPGA 引脚对照助手 · 核心板 ↔ 底板 · XDC 核对</p>
+      </div>
+    </div>
+    <div class="file-bar">
+      <a class="btn" href="index.html">打开工具</a>
+      <a class="btn ghost" href="CHANGELOG.md" target="_blank" rel="noopener">更新日志</a>
+    </div>
+  </header>
+
+  <div class="help">
+    <section class="help-card">
+      <h2>这是什么</h2>
+      <p>根据核心板、底板两份引脚表，查出 FPGA 上的 Vivado 焊盘（<code>PACKAGE_PIN</code>）接到了底板上的哪一个功能。也可以上传 <code>.xdc</code>，标出约束哪些是对的、哪些接错、哪些多余。</p>
+      <p>全部在浏览器里计算，表格不会上传到公司以外的服务器。当前版本 <strong>0.4.0</strong>，只核对 PL 端，PS（MIO）暂不对照。</p>
+    </section>
+
+    <section class="help-card">
+      <h2>怎么用</h2>
+      <ol>
+        <li>打开工具页面。默认会加载示例核心板 / 底板表，直接可以搜。</li>
+        <li>换成自己的板：点「选择两个 Excel」，一次选中核心板、底板各一份（Altium 导出的引脚表即可，不用管文件名，软件会自动判断哪张是核心板）。</li>
+        <li>在搜索框输入功能名、BANK、焊盘或 IO 名，多个词<strong>满足任一</strong>就会列出。可按 BANK 筛选。</li>
+        <li>「未引出 / 底板其他 / 核心板其他」默认收起，点开才显示没有接到连接器的脚。</li>
+        <li>核对约束：点「上传约束文件」选 <code>.xdc</code> 或 <code>.txt</code>。只检查未注释的 <code>PACKAGE_PIN</code> 行。</li>
+        <li>点 PACKAGE_PIN 或 IO 名称可复制，方便贴到 Vivado。</li>
+        <li>「下载带批注文本」得到带 <code>##[核对]</code> 的文件，Vivado 会把这行当注释忽略。</li>
+      </ol>
+    </section>
+
+    <section class="help-card">
+      <h2>对照规则</h2>
+      <p>核心板 FPGA 名 ↔ 底板丝印，例如：</p>
+      <p><code>IO_L20N_T3_33</code> ↔ <code>BANK33_20_N</code></p>
+      <p><code>L20N</code> 对应 <code>20_N</code>，结尾 <code>_33</code> 对应 <code>BANK33</code>。底板名里多出来的 <code>MRC</code> / <code>SRC</code> 会先去掉再配对。</p>
+    </section>
+
+    <section class="help-card">
+      <h2>约束核对三种结果</h2>
+      <ul>
+        <li><span class="ok">正确</span>：该焊盘接到了底板，端口名和底板功能能对上。</li>
+        <li><span class="bad">错误</span>：该焊盘接到了底板，但约束的端口不是这个功能；或同一个 <code>PACKAGE_PIN</code> 写了两次。</li>
+        <li><span class="extra">多余</span>：封装上有这只脚，但没接到当前底板连接器（例如片上 PHY、JTAG）。</li>
+      </ul>
+      <p>文末还会列出：底板上已经连了、但约束文件里没写的脚。</p>
+    </section>
+
+    <section class="help-card">
+      <h2>表格要求</h2>
+      <p>Excel 需含列：<code>标号</code>、<code>引脚名称</code>、<code>网络</code>（Altium 引脚报表常用这几列）。</p>
+      <ul>
+        <li>核心板：<code>标号</code> 是封装焊盘（如 <code>U4</code>），<code>引脚名称</code> 是 <code>IO_Lxx…</code>。</li>
+        <li>底板：<code>引脚名称</code> 是 <code>BANKxx_…</code>，<code>网络</code> 是功能名（如 <code>EXT_UART_1_TX_TTL</code>）。</li>
+      </ul>
+      <p>若导出时网络名被截成约 20 个字符，页面会完整显示单元格内容，但截断部分无法还原，建议从原理图重新导出完整网络名。</p>
+    </section>
+  </div>
+</body>
+</html>

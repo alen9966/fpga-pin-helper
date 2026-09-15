@@ -169,6 +169,32 @@ mark { background: var(--mark); padding: 0 1px; }
 
 a.btn { text-decoration: none; display: inline-block; }
 
+.help {
+  max-width: 860px;
+  margin: 18px auto 40px;
+  padding: 0 24px;
+}
+.help-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 20px 22px 24px;
+  margin-bottom: 14px;
+}
+.help h2 { margin: 0 0 10px; font-size: 16px; color: var(--navy); }
+.help p, .help li { color: var(--ink); line-height: 1.65; }
+.help ol, .help ul { margin: 8px 0 0; padding-left: 22px; }
+.help code {
+  font-family: Consolas, "Cascadia Mono", monospace;
+  background: #eef6f4;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 12.5px;
+}
+.help .ok { color: #0f766e; font-weight: 650; }
+.help .bad { color: #9f1239; font-weight: 650; }
+.help .extra { color: #9a3412; font-weight: 650; }
+
 .hidden { display: none !important; }
 .toast {
   position: fixed; bottom: 18px; right: 18px;
