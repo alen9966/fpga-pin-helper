@@ -34,3 +34,13 @@ assert(conflict.ambiguousNodes.has("R1-1"));
 assert(!conflict.byNode.has("R1-1"));
 assert(conflict.warnings.length >= 2);
 console.log("Netlist connectivity, shared nets, XDC eligibility and ambiguity checks passed");
+const mapping = pinMappingCsv({ matched: [
+  { function: 'SPI,"DO"', package_pin: "A13" },
+  { function: 'SPI,"DO"', package_pin: "A13" },
+  { function: "other", package_pin: "" },
+  { function: "", package_pin: "B1" },
+] });
+assert.equal(mapping, '\uFEFF"底板功能","PACKAGE_PIN"\r\n"SPI,""DO""","A13"');
+assert(pinMappingCsv(report).includes('"TX_FRAME_P","A13"'));
+assert(!pinMappingCsv(report).includes('"GND"'));
+console.log("Two-column mapping CSV export passed");

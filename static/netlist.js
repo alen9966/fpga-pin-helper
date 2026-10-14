@@ -1,4 +1,17 @@
 // Protel netlists carry electrical connectivity, not FPGA pin capabilities.
+function pinMappingCsv(report) {
+  const rows = [["底板功能", "PACKAGE_PIN"]];
+  const seen = new Set();
+  for (const row of report.matched || []) {
+    if (!row.function || !row.package_pin) continue;
+    const key = JSON.stringify([row.function, row.package_pin]);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    rows.push([row.function, row.package_pin]);
+  }
+  return "\uFEFF" + rows.map(row => row.map(value => '"' + String(value).replaceAll('"', '""') + '"').join(",")).join("\r\n");
+}
+
 function decodeNetlist(buffer) {
   try { return new TextDecoder("utf-8", { fatal: true }).decode(buffer); }
   catch { return new TextDecoder("gb18030").decode(buffer); }

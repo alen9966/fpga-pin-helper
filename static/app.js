@@ -463,3 +463,14 @@ document.getElementById("downloadConnections").addEventListener("click", () => {
   a.href = url; a.download = "引脚连接表.csv"; a.click();
   URL.revokeObjectURL(url);
 });
+
+document.getElementById("downloadPinMapping").addEventListener("click", () => {
+  if (!report) return;
+  const url = URL.createObjectURL(new Blob([pinMappingCsv(report)], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "底板功能_PACKAGE_PIN.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast("已导出全部已连接功能与 PACKAGE_PIN 两列");
+});

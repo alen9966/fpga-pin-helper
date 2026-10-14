@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>FPGA 引脚对照助手</title>
-  <link rel="stylesheet" href="static/style.css?v=0.5.1" />
+  <link rel="stylesheet" href="static/style.css?v=0.5.2" />
 </head>
 <body>
   <header class="top">
@@ -66,6 +66,7 @@
     </div>
     <div class="stats" id="statsLine"></div>
     <button id="downloadConnections" class="btn ghost" type="button">下载连接表 CSV</button>
+    <button id="downloadPinMapping" class="btn" type="button">导出底板功能 → PACKAGE_PIN</button>
   </section>
 
   <main>
@@ -110,9 +111,9 @@
 
   <div id="toast" class="toast hidden"></div>
   <script src="static/xlsx.full.min.js"></script>
-  <script src="static/matcher.js?v=0.5.1"></script>
-  <script src="static/xdc-review.js?v=0.5.1"></script>
-  <script src="static/netlist.js?v=0.5.1"></script>
-  <script src="static/app.js?v=0.5.1"></script>
+  <script src="static/matcher.js?v=0.5.2"></script>
+  <script src="static/xdc-review.js?v=0.5.2"></script>
+  <script src="static/netlist.js?v=0.5.2"></script>
+  <script src="static/app.js?v=0.5.2"></script>
 </body>
 </html>
