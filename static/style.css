@@ -105,8 +105,14 @@ main { padding: 14px 24px 40px; }
   border: 1px solid var(--line);
   border-radius: 10px;
   overflow: auto;
-  max-height: calc(100vh - 280px);
+  max-height: none;
 }
+body[data-ready="1"] { display: flex; flex-direction: column; height: 100dvh; min-height: 100vh; }
+body[data-ready="1"] > .top,
+body[data-ready="1"] > .toolbar { flex-shrink: 0; }
+body[data-ready="1"] > main { display: flex; flex-direction: column; flex: 1; min-height: 55vh; padding-bottom: 16px; }
+body[data-ready="1"] .table-wrap { flex: 1 1 0; min-height: 45vh; }
+body[data-ready="1"] .review-wrap { flex-shrink: 0; }
 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
 th {

@@ -187,6 +187,7 @@ function acceptReport(data) {
     return;
   }
   report = data;
+  document.getElementById("netlistPanel").classList.add("hidden");
   review = null;
   reviewWrap.classList.add("hidden");
   selectedBanks.clear();
