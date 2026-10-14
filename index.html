@@ -26,12 +26,29 @@
         <input id="xdcInput" type="file" accept=".xdc,.txt,.XDC" hidden />
       </label>
       <button id="sampleXdcBtn" class="btn ghost" type="button">核对示例约束</button>
+      <button id="netlistToggle" class="btn ghost" type="button">导入 AD 网表</button>
       <a class="btn ghost" href="使用说明.html">使用说明</a>
       <a class="btn ghost" href="CHANGELOG.md" target="_blank" rel="noopener">更新日志</a>
       <span id="fileStatus" class="status"></span>
     </div>
   </header>
 
+  <section class="toolbar hidden" id="netlistPanel">
+    <p>从 AD 导出 Protel 格式的工程网表，分别选择核心板和底板。连接器按同名管脚对接（A1 → A1、J1 → J1）。</p>
+    <div class="file-bar">
+      <label class="btn file-btn">选择核心板 .NET<input id="coreNetInput" type="file" accept=".net" hidden /></label>
+      <span id="coreNetStatus" class="status">未选择</span>
+      <label class="btn file-btn">选择底板 .NET<input id="baseNetInput" type="file" accept=".net" hidden /></label>
+      <span id="baseNetStatus" class="status">未选择</span>
+    </div>
+    <div class="file-bar">
+      <label>核心板 FPGA <select id="netFpga"></select></label>
+      <label>核心板连接器 <select id="netCoreConnector"></select></label>
+      <label>底板对应接口 <select id="netBaseConnector"></select></label>
+      <button id="matchNetlists" class="btn" type="button" disabled>按同名脚生成连接表</button>
+    </div>
+    <p class="hint">位号会自动推荐，请核实后生成。仅追踪同一网络的直接连接，不穿过电阻、电容或芯片；网表不含 IO 名称、BANK 或未连接焊盘。共享网络合并到「核心板其他」。约束核对只按常规数字 GPIO 网络标签核对连接，不能验证引脚类型或电压。</p>
+  </section>
   <section class="toolbar hidden" id="toolbar">
     <div class="detect" id="detectLine"></div>
     <div class="search-row">
@@ -48,10 +65,11 @@
       </div>
     </div>
     <div class="stats" id="statsLine"></div>
+    <button id="downloadConnections" class="btn ghost" type="button">下载连接表 CSV</button>
   </section>
 
   <main>
-    <p id="emptyHint" class="hint">请选择核心板、底板各一份引脚表，或点击「加载当前示例」。</p>
+    <p id="emptyHint" class="hint">请选择核心板、底板各一份引脚表，或点击「导入 AD 网表」选择两份工程 .NET 文件；也可手动加载示例。</p>
     <p id="errorBox" class="error hidden"></p>
     <div id="tableWrap" class="table-wrap hidden">
       <table>
@@ -64,6 +82,7 @@
             <th>连接器脚</th>
             <th>核心板丝印</th>
             <th>类别</th>
+            <th>同网器件管脚 / 附加信息</th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
@@ -93,6 +112,7 @@
   <script src="static/xlsx.full.min.js"></script>
   <script src="static/matcher.js"></script>
   <script src="static/xdc-review.js"></script>
+  <script src="static/netlist.js"></script>
   <script src="static/app.js"></script>
 </body>
 </html>

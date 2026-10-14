@@ -148,9 +148,10 @@ function render() {
         <td class="pin" data-copy="${escapeHtml(row.package_pin)}">${highlight(row.package_pin, tokens)}</td>
         <td class="io" data-copy="${escapeHtml(row.io_name)}">${highlight(row.io_name, tokens)}</td>
         <td>${highlight(row.bank ? "BANK" + row.bank : "", tokens)}</td>
-        <td>${highlight(row.connector_pin, tokens)}</td>
+        <td title="${escapeHtml(row.connector_pin || "")}">${highlight((row.connector_pin || "").slice(0, 160), tokens)}${(row.connector_pin || "").length > 160 ? "…" : ""}</td>
         <td>${highlight(row.core_silk, tokens)}</td>
         <td><span class="tag ${row.category}">${cat}</span></td>
+        <td title="${escapeHtml(row.base_endpoints || row.extra || "")}">${highlight((row.base_endpoints || row.extra || "").slice(0, 160), tokens)}${(row.base_endpoints || row.extra || "").length > 160 ? "…" : ""}</td>
       </tr>`;
     })
     .join("");
@@ -168,7 +169,8 @@ function render() {
 
   const d = report.detected;
   detectLine.textContent = `已识别：核心板「${report.core_file}」· 底板「${report.base_file}」` +
-    (d?.guessed ? "（按 IO 数量推断）" : "");
+    (report.netlist_mode ? ` · ${d.fpga} → ${d.connector} ↔ ${d.baseConnector}（同名脚）` : d?.guessed ? "（按 IO 数量推断）" : "");
+  if (report.netlist_mode) statsLine.textContent = `直接连接 ${s.matched} 条　未接到底板 ${s.unrouted} 条　底板其他 ${s.base_other} 条　共享网络 ${s.fpga_other} 条　核心板 FPGA 已入网焊盘 ${s.core_pins} 个`;
   } catch (err) {
     showError("界面渲染失败：" + (err && err.message ? err.message : err));
   }
@@ -180,6 +182,8 @@ function acceptReport(data) {
     return;
   }
   report = data;
+  review = null;
+  reviewWrap.classList.add("hidden");
   selectedBanks.clear();
   selectedScopes = new Set(["matched"]);
   searchInput.value = "";
@@ -187,7 +191,7 @@ function acceptReport(data) {
   emptyHint.classList.add("hidden");
   toolbar.classList.remove("hidden");
   tableWrap.classList.remove("hidden");
-  fileStatus.textContent = `${data.stats.matched} 条 PL 已连接`;
+  fileStatus.textContent = `${data.stats.matched} 条${data.netlist_mode ? "直接连接" : " PL 已连接"}`;
   render();
 }
 
@@ -363,5 +367,74 @@ downloadXdcBtn.addEventListener("click", () => {
   a.href = url;
   a.download = name;
   a.click();
+  URL.revokeObjectURL(url);
+});
+
+const loadedNetlists = { core: null, base: null };
+const netFpga = document.getElementById("netFpga");
+const netCoreConnector = document.getElementById("netCoreConnector");
+const netBaseConnector = document.getElementById("netBaseConnector");
+const matchNetlistsBtn = document.getElementById("matchNetlists");
+document.getElementById("netlistToggle").addEventListener("click", () => {
+  document.getElementById("netlistPanel").classList.toggle("hidden");
+});
+
+function fillNetlistSelect(select, netlist) {
+  select.replaceChildren();
+  for (const component of netlist.components.values()) {
+    const option = document.createElement("option");
+    option.value = component.ref;
+    option.textContent = `${component.ref} · ${component.value} (${netlistPins(netlist, component.ref).length} 脚)`;
+    select.appendChild(option);
+  }
+}
+
+for (const side of ["core", "base"]) {
+  const input = document.getElementById(side + "NetInput");
+  const status = document.getElementById(side + "NetStatus");
+  input.addEventListener("change", async () => {
+    const file = input.files?.[0];
+    if (!file) return;
+    loadedNetlists[side] = null;
+    matchNetlistsBtn.disabled = true;
+    status.textContent = "正在解析…";
+    try {
+      const netlist = parseProtelNetlist(decodeNetlist(await file.arrayBuffer()), file.name);
+      loadedNetlists[side] = netlist;
+      status.textContent = `${file.name} · ${netlist.components.size} 个器件 / ${netlist.nets.length} 个网络`;
+      if (netlist.warnings.length) status.textContent += "；注意：" + [...new Set(netlist.warnings)].join("；");
+      if (side === "core") {
+        fillNetlistSelect(netFpga, netlist);
+        fillNetlistSelect(netCoreConnector, netlist);
+      } else fillNetlistSelect(netBaseConnector, netlist);
+      if (loadedNetlists.core && loadedNetlists.base) {
+        const suggestion = suggestNetlistRefs(loadedNetlists.core, loadedNetlists.base);
+        netFpga.value = suggestion.fpga;
+        netCoreConnector.value = suggestion.connector;
+        netBaseConnector.value = suggestion.baseConnector;
+        matchNetlistsBtn.disabled = false;
+      }
+      showError("");
+    } catch (err) {
+      status.textContent = "解析失败，请重新选择";
+      showError("网表解析失败：" + err.message);
+    } finally { input.value = ""; }
+  });
+}
+
+matchNetlistsBtn.addEventListener("click", () => {
+  try {
+    acceptReport(analyzeNetlists(loadedNetlists.core, loadedNetlists.base, netFpga.value, netCoreConnector.value, netBaseConnector.value));
+  } catch (err) { showError("连接表生成失败：" + err.message); }
+});
+
+document.getElementById("downloadConnections").addEventListener("click", () => {
+  if (!report) return;
+  const rows = [["类别", "底板功能", "PACKAGE_PIN", "IO 名称", "BANK", "连接器脚", "核心板网络/丝印", "核心板器件脚", "同网器件管脚"]];
+  for (const row of allRows()) rows.push([CATEGORY_LABEL[row.category] || row.category, row.function, row.package_pin, row.io_name, row.bank, row.connector_pin, row.core_silk, row.core_node || "", row.base_endpoints || row.extra]);
+  const csv = rows.map(row => row.map(value => '"' + String(value || "").replaceAll('"', '""') + '"').join(",")).join("\r\n");
+  const url = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = "引脚连接表.csv"; a.click();
   URL.revokeObjectURL(url);
 });

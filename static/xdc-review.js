@@ -125,6 +125,7 @@ function reviewXdc(text, report) {
   const byPin = {};
   const allPins = new Set();
   for (const row of report.matched || []) {
+    if (row.review_eligible === false) continue;
     const pin = String(row.package_pin || "").toUpperCase();
     if (pin) {
       byPin[pin] = row;
@@ -183,7 +184,7 @@ function reviewXdc(text, report) {
       note = `${pin} 在核心板封装上，但未接到本底板连接器`;
     } else {
       status = STATUS_EXTRA;
-      note = `核心板封装上无 PACKAGE_PIN ${pin}`;
+      note = report.netlist_mode ? `${pin} 不在本次网表可核对的 GPIO 连接中；网表不含未连接焊盘及完整引脚类型，需查引脚表` : `核心板封装上无 PACKAGE_PIN ${pin}`;
     }
     if (!seenPins[pin]) seenPins[pin] = lineno;
     counts[status] += 1;
@@ -197,6 +198,7 @@ function reviewXdc(text, report) {
 
   const missing = [];
   for (const row of report.matched || []) {
+    if (row.review_eligible === false) continue;
     const pin = String(row.package_pin || "").toUpperCase();
     const func = row.function || "";
     if (pin && !usedBoardPins.has(pin) && func && !func.toUpperCase().startsWith("NET")) {

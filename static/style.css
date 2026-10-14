@@ -196,6 +196,8 @@ a.btn { text-decoration: none; display: inline-block; }
 .help .extra { color: #9a3412; font-weight: 650; }
 
 .hidden { display: none !important; }
+#netlistPanel .file-bar { margin: 12px 0; }
+#netlistPanel select { max-width: 240px; padding: 6px; }
 .toast {
   position: fixed; bottom: 18px; right: 18px;
   background: var(--navy); color: white;
