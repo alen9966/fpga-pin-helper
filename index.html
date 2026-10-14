@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>FPGA 引脚对照助手</title>
-  <link rel="stylesheet" href="static/style.css" />
+  <link rel="stylesheet" href="static/style.css?v=0.5.1" />
 </head>
 <body>
   <header class="top">
@@ -17,8 +17,8 @@
     </div>
     <div class="file-bar">
       <label class="btn file-btn">
-        选择两个表格
-        <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" multiple hidden />
+        选择两个文件
+        <input id="fileInput" type="file" accept=".xlsx,.xls,.csv,.net" multiple hidden />
       </label>
       <button id="sampleBtn" class="btn ghost" type="button">加载当前示例</button>
       <label class="btn file-btn">
@@ -110,9 +110,9 @@
 
   <div id="toast" class="toast hidden"></div>
   <script src="static/xlsx.full.min.js"></script>
-  <script src="static/matcher.js"></script>
-  <script src="static/xdc-review.js"></script>
-  <script src="static/netlist.js"></script>
-  <script src="static/app.js"></script>
+  <script src="static/matcher.js?v=0.5.1"></script>
+  <script src="static/xdc-review.js?v=0.5.1"></script>
+  <script src="static/netlist.js?v=0.5.1"></script>
+  <script src="static/app.js?v=0.5.1"></script>
 </body>
 </html>

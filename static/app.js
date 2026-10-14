@@ -219,6 +219,23 @@ async function loadSamples() {
 
 async function loadLocalExcels(files) {
   try {
+    const netFiles = files.filter(f => /\.net$/i.test(f.name));
+    if (netFiles.length) {
+      if (netFiles.length !== 2) throw new Error("两份 AD 网表请一起选择；不能将 .NET 与 Excel / CSV 混选。");
+      const knownCore = files.find(f => /0239/.test(f.name));
+      const knownBase = files.find(f => /0240/.test(f.name));
+      const coreFile = knownCore && knownBase ? knownCore : files[0];
+      const baseFile = knownCore && knownBase ? knownBase : files[1];
+      document.getElementById("netlistPanel").classList.remove("hidden");
+      await loadNetlistFile("core", coreFile);
+      await loadNetlistFile("base", baseFile);
+      if (knownCore && knownBase && netFpga.value === "U5" && netCoreConnector.value === "J8" && netBaseConnector.value === "U10") {
+        acceptReport(analyzeNetlists(loadedNetlists.core, loadedNetlists.base, "U5", "J8", "U10"));
+      } else {
+        fileStatus.textContent = "已按网表解析，请核实核心板、底板及接口位号后生成连接表。";
+      }
+      return;
+    }
     const parsed = [];
     for (const f of files) parsed.push(await parseExcelFile(f, f.name));
     acceptReport(analyzeTables(parsed[0], parsed[1]));
@@ -235,6 +252,7 @@ fileInput.addEventListener("change", async () => {
   }
   fileStatus.textContent = `${files[0].name}  +  ${files[1].name}`;
   await loadLocalExcels(files);
+  fileInput.value = "";
 });
 
 sampleBtn.addEventListener("click", () => loadSamples());
@@ -389,12 +407,8 @@ function fillNetlistSelect(select, netlist) {
   }
 }
 
-for (const side of ["core", "base"]) {
-  const input = document.getElementById(side + "NetInput");
+async function loadNetlistFile(side, file) {
   const status = document.getElementById(side + "NetStatus");
-  input.addEventListener("change", async () => {
-    const file = input.files?.[0];
-    if (!file) return;
     loadedNetlists[side] = null;
     matchNetlistsBtn.disabled = true;
     status.textContent = "正在解析…";
@@ -418,7 +432,18 @@ for (const side of ["core", "base"]) {
     } catch (err) {
       status.textContent = "解析失败，请重新选择";
       showError("网表解析失败：" + err.message);
-    } finally { input.value = ""; }
+      throw err;
+    }
+}
+
+for (const side of ["core", "base"]) {
+  const input = document.getElementById(side + "NetInput");
+  input.addEventListener("change", async () => {
+    const file = input.files?.[0];
+    if (!file) return;
+    try { await loadNetlistFile(side, file); }
+    catch { /* loadNetlistFile displays the parsing error. */ }
+    finally { input.value = ""; }
   });
 }
 

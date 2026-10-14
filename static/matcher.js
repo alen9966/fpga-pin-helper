@@ -334,6 +334,9 @@ function analyzeTables(fileA, fileB) {
 
 async function parseExcelFile(fileOrBuffer, filename) {
   filename = filename || fileOrBuffer.name || "";
+  if (!/\.(xlsx|xls|csv)$/i.test(filename)) {
+    throw new Error(/\.net$/i.test(filename) ? ".NET 是 AD 网表，请通过网表流程导入，不能当作引脚表读取。" : "引脚表仅支持 Excel / CSV 文件。");
+  }
   const buf = fileOrBuffer instanceof ArrayBuffer ? fileOrBuffer : await fileOrBuffer.arrayBuffer();
   let wb;
   if (/\.csv$/i.test(filename)) {
