@@ -253,8 +253,6 @@ tbody.addEventListener("click", (ev) => {
   copyText(cell.getAttribute("data-copy"));
 });
 
-loadSamples();
-
 function statusClass(status) {
   if (status === "正确") return "ok";
   if (status === "错误") return "bad";
