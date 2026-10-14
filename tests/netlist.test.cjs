@@ -40,7 +40,7 @@ const mapping = pinMappingCsv({ matched: [
   { function: "other", package_pin: "" },
   { function: "", package_pin: "B1" },
 ] });
-assert.equal(mapping, '\uFEFF"底板功能","PACKAGE_PIN"\r\n"SPI,""DO""","A13"');
+assert.equal(mapping, '\uFEFF"底板功能","PACKAGE_PIN","连接芯片"\r\n"SPI,""DO""","A13",""');
 assert(pinMappingCsv(report).includes('"TX_FRAME_P","A13"'));
 assert(!pinMappingCsv(report).includes('"GND"'));
 console.log("Two-column mapping CSV export passed");
@@ -62,4 +62,7 @@ const signals = pinMappingCsv(detail);
 for (const name of ["TX_FRAME_P", "PL_DDR_D0", "FLASH_DQ0", "PROGRAM_B"]) assert(signals.includes(name));
 for (const name of ["NetR1_2", "35_3_P", '"NC"', "NetC1_1"]) assert(!signals.includes(name));
 assert(pinMappingCsv(detail, true).includes("NetR1_2"));
+assert.equal(report.matched[0].connected_chips, "底板：U2（part）");
+assert.equal(detail.core_internal.find(row => row.function === "FLASH_DQ0").connected_chips, "核心板：U3（part）");
+assert(detail.core_internal.find(row => row.function === "FLASH_DQ0").search_text.includes("u3"));
 console.log("Internal FLASH/DDR, pending, floating and inductor supply classification passed");

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>FPGA 引脚对照助手</title>
-  <link rel="stylesheet" href="static/style.css?v=0.6.0" />
+  <link rel="stylesheet" href="static/style.css?v=0.6.1" />
 </head>
 <body>
   <header class="top">
@@ -68,7 +68,7 @@
     </div>
     <div class="stats" id="statsLine"></div>
     <button id="downloadConnections" class="btn ghost" type="button">下载连接表 CSV</button>
-    <button id="downloadPinMapping" class="btn" type="button">导出信号功能 → PACKAGE_PIN</button>
+    <button id="downloadPinMapping" class="btn" type="button">导出信号映射（含芯片）</button>
     <label id="pendingExportOption" class="hidden"><input id="includePendingExport" type="checkbox" /> 导出时包含待确认信号（仅有阻容连接、用途未知）</label>
   </section>
 
@@ -81,6 +81,7 @@
           <tr>
             <th id="functionHeader">底板功能</th>
             <th>PACKAGE_PIN</th>
+            <th>连接芯片（位号 / 型号）</th>
             <th>IO 名称</th>
             <th>BANK</th>
             <th>连接器脚</th>
@@ -114,9 +115,9 @@
 
   <div id="toast" class="toast hidden"></div>
   <script src="static/xlsx.full.min.js"></script>
-  <script src="static/matcher.js?v=0.6.0"></script>
-  <script src="static/xdc-review.js?v=0.6.0"></script>
-  <script src="static/netlist.js?v=0.6.0"></script>
-  <script src="static/app.js?v=0.6.0"></script>
+  <script src="static/matcher.js?v=0.6.1"></script>
+  <script src="static/xdc-review.js?v=0.6.1"></script>
+  <script src="static/netlist.js?v=0.6.1"></script>
+  <script src="static/app.js?v=0.6.1"></script>
 </body>
 </html>

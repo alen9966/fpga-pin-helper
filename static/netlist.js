@@ -1,6 +1,6 @@
 // Protel netlists carry electrical connectivity, not FPGA pin capabilities.
 function pinMappingCsv(report, includePending = false) {
-  const rows = [[report.netlist_mode ? "信号功能" : "底板功能", "PACKAGE_PIN"]];
+  const rows = [[report.netlist_mode ? "信号功能" : "底板功能", "PACKAGE_PIN", "连接芯片"]];
   const seen = new Set();
   for (const row of [...(report.matched || []), ...(report.core_internal || []), ...(includePending ? report.pending || [] : [])]) {
     if (["power", "floating"].includes(row.signal_scope)) continue;
@@ -8,7 +8,7 @@ function pinMappingCsv(report, includePending = false) {
     const key = JSON.stringify([row.function, row.package_pin]);
     if (seen.has(key)) continue;
     seen.add(key);
-    rows.push([row.function, row.package_pin]);
+    rows.push([row.function, row.package_pin, row.connected_chips || ""]);
   }
   return "\uFEFF" + rows.map(row => row.map(value => '"' + String(value).replaceAll('"', '""') + '"').join(",")).join("\r\n");
 }
@@ -94,6 +94,18 @@ function powerNetNames(netlist) {
   return names;
 }
 
+function connectedChipNames(netlist, nodes, excludedRefs = []) {
+  const refs = new Set();
+  for (const node of nodes) {
+    const ref = node.slice(0, node.lastIndexOf("-"));
+    if (/^U\d/i.test(ref) && !excludedRefs.includes(ref) && !netlist.ambiguousNodes.has(node) && !netlist.ambiguousComponents.has(ref)) refs.add(ref);
+  }
+  return [...refs].map(ref => {
+    const component = netlist.components.get(ref);
+    return `${ref}${component?.value ? "（" + component.value + "）" : ""}`;
+  }).join(" · ");
+}
+
 function analyzeNetlists(core, base, fpga, connector, baseConnector) {
   if (!core.components.has(fpga) || !core.components.has(connector) || !base.components.has(baseConnector)) throw new Error("请选择有效的 FPGA 和连接器位号");
   if (fpga === connector) throw new Error("FPGA 和核心板连接器不能是同一个器件");
@@ -136,6 +148,10 @@ function analyzeNetlists(core, base, fpga, connector, baseConnector) {
           connector_pin: `${connNode} ↔ ${baseNode}`, core_silk: net.name, extra: endpoints.join(" · ") });
         row.core_node = node;
         row.signal_scope = "base";
+        const baseChips = connectedChipNames(base, endpoints, [baseConnector]);
+        const coreChips = connectedChipNames(core, net.nodes, [fpga, connector]);
+        row.connected_chips = [baseChips ? "底板：" + baseChips : "", coreChips ? "核心板：" + coreChips : ""].filter(Boolean).join("；");
+        row.search_text += " " + row.connected_chips.toLowerCase();
         row.base_endpoints = endpoints.join(" · ");
         // Only conventional numbered GPIO net labels are eligible for PACKAGE_PIN review.
         // Netlists alone cannot establish IO names, banks, supplies, PS, or MGT capabilities.
@@ -150,6 +166,9 @@ function analyzeNetlists(core, base, fpga, connector, baseConnector) {
         const category = scope === "internal" ? "core_internal" : scope === "pending" ? "pending" : "unrouted";
         const row = makeRow({ category, function: net.name, package_pin: node.slice(prefix.length), core_silk: net.name, extra: endpoints.join(" · ") });
         row.core_node = node;
+        const chips = connectedChipNames(core, endpoints, [fpga, connector]);
+        row.connected_chips = chips ? "核心板：" + chips : "";
+        row.search_text += " " + row.connected_chips.toLowerCase();
         row.signal_scope = scope;
         row.review_eligible = false;
         (scope === "internal" ? internal : scope === "pending" ? pending : unrouted).push(row);

@@ -150,6 +150,7 @@ function render() {
       return `<tr>
         <td class="func">${highlight(row.function, tokens)}</td>
         <td class="pin" data-copy="${escapeHtml(row.package_pin)}">${highlight(row.package_pin, tokens)}</td>
+        <td>${highlight(row.connected_chips || "", tokens)}</td>
         <td class="io" data-copy="${escapeHtml(row.io_name)}">${highlight(row.io_name, tokens)}</td>
         <td>${highlight(row.bank ? "BANK" + row.bank : "", tokens)}</td>
         <td title="${escapeHtml(row.connector_pin || "")}">${highlight((row.connector_pin || "").slice(0, 160), tokens)}${(row.connector_pin || "").length > 160 ? "…" : ""}</td>
@@ -465,8 +466,8 @@ matchNetlistsBtn.addEventListener("click", () => {
 
 document.getElementById("downloadConnections").addEventListener("click", () => {
   if (!report) return;
-  const rows = [["类别", "底板功能", "PACKAGE_PIN", "IO 名称", "BANK", "连接器脚", "核心板网络/丝印", "核心板器件脚", "同网器件管脚"]];
-  for (const row of allRows()) rows.push([CATEGORY_LABEL[row.category] || row.category, row.function, row.package_pin, row.io_name, row.bank, row.connector_pin, row.core_silk, row.core_node || "", row.base_endpoints || row.extra]);
+  const rows = [["类别", "信号功能", "PACKAGE_PIN", "连接芯片", "IO 名称", "BANK", "连接器脚", "核心板网络/丝印", "核心板器件脚", "同网器件管脚"]];
+  for (const row of allRows()) rows.push([CATEGORY_LABEL[row.category] || row.category, row.function, row.package_pin, row.connected_chips || "", row.io_name, row.bank, row.connector_pin, row.core_silk, row.core_node || "", row.base_endpoints || row.extra]);
   const csv = rows.map(row => row.map(value => '"' + String(value || "").replaceAll('"', '""') + '"').join(",")).join("\r\n");
   const url = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }));
   const a = document.createElement("a");
@@ -480,7 +481,7 @@ document.getElementById("downloadPinMapping").addEventListener("click", () => {
   const url = URL.createObjectURL(new Blob([pinMappingCsv(report, includePending)], { type: "text/csv;charset=utf-8" }));
   const a = document.createElement("a");
   a.href = url;
-  a.download = report.netlist_mode ? "信号功能_PACKAGE_PIN.csv" : "底板功能_PACKAGE_PIN.csv";
+  a.download = report.netlist_mode ? "信号功能_PACKAGE_PIN_连接芯片.csv" : "底板功能_PACKAGE_PIN_连接芯片.csv";
   a.click();
   URL.revokeObjectURL(url);
   showToast(includePending ? "已导出信号和待确认项，排除电源与悬空脚" : "已导出底板和核心板内部信号，排除电源、悬空及待确认项");
