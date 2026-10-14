@@ -47,7 +47,7 @@ def changelog_file():
 def api_match():
     files = request.files.getlist("files")
     if len(files) != 2:
-        return jsonify({"error": "请一次选择两个 Excel 文件：核心板一份、底板一份。"}), 400
+        return jsonify({"error": "请一次选择两个表格（Excel / CSV）：核心板一份、底板一份。"}), 400
     blobs = []
     names = []
     for f in files:

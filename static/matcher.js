@@ -333,7 +333,19 @@ function analyzeTables(fileA, fileB) {
 }
 
 async function parseExcelFile(fileOrBuffer, filename) {
+  filename = filename || fileOrBuffer.name || "";
   const buf = fileOrBuffer instanceof ArrayBuffer ? fileOrBuffer : await fileOrBuffer.arrayBuffer();
-  const wb = XLSX.read(buf, { type: "array" });
+  let wb;
+  if (/\.csv$/i.test(filename)) {
+    let text;
+    try {
+      text = new TextDecoder("utf-8", { fatal: true }).decode(buf);
+    } catch {
+      text = new TextDecoder("gb18030").decode(buf);
+    }
+    wb = XLSX.read(text.replace(/^\uFEFF/, ""), { type: "string", raw: true });
+  } else {
+    wb = XLSX.read(buf, { type: "array" });
+  }
   return parseWorkbook(wb, filename || fileOrBuffer.name || "");
 }

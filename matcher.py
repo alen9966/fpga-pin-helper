@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import csv
 import re
-from io import BytesIO
+from io import BytesIO, StringIO
 from pathlib import Path
 from typing import Any
 
@@ -45,20 +46,27 @@ def _header_index(headers: list[str], aliases: tuple[str, ...], fallback: int) -
 
 
 def _load_sheet_rows(source: Path | bytes, filename: str = "") -> tuple[str, list[dict[str, str]]]:
-    if isinstance(source, bytes):
-        wb = load_workbook(BytesIO(source), data_only=True, read_only=True)
+    if Path(filename or (source.name if isinstance(source, Path) else "")).suffix.lower() == ".csv":
+        data = source if isinstance(source, bytes) else source.read_bytes()
+        try:
+            text = data.decode("utf-8-sig")
+        except UnicodeDecodeError:
+            text = data.decode("gb18030")
+        try:
+            dialect = csv.Sniffer().sniff(text[:8192], delimiters=",;\t")
+        except csv.Error:
+            dialect = csv.excel
+        best_rows = list(csv.reader(StringIO(text, newline=""), dialect))
     else:
-        wb = load_workbook(source, data_only=True, read_only=True)
-
-    best_name = wb.sheetnames[0]
-    best_rows: list[list[Any]] = []
-    for name in wb.sheetnames:
-        ws = wb[name]
-        rows = [list(r) for r in ws.iter_rows(values_only=True)]
-        nonempty = sum(1 for r in rows if any(_norm(c) for c in r))
-        if nonempty > sum(1 for r in best_rows if any(_norm(c) for c in r)):
-            best_name, best_rows = name, rows
-    wb.close()
+        wb = load_workbook(BytesIO(source) if isinstance(source, bytes) else source, data_only=True, read_only=True)
+        best_rows: list[list[Any]] = []
+        for name in wb.sheetnames:
+            ws = wb[name]
+            rows = [list(r) for r in ws.iter_rows(values_only=True)]
+            nonempty = sum(1 for r in rows if any(_norm(c) for c in r))
+            if nonempty > sum(1 for r in best_rows if any(_norm(c) for c in r)):
+                best_rows = rows
+        wb.close()
 
     if not best_rows:
         return filename, []
