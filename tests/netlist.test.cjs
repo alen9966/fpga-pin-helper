@@ -44,3 +44,22 @@ assert.equal(mapping, '\uFEFF"底板功能","PACKAGE_PIN"\r\n"SPI,""DO""","A13"'
 assert(pinMappingCsv(report).includes('"TX_FRAME_P","A13"'));
 assert(!pinMappingCsv(report).includes('"GND"'));
 console.log("Two-column mapping CSV export passed");
+const detailCore = parseProtelNetlist(component("U1") + component("J1") + component("U3") + component("R1") + component("L1") +
+  net("35_24_P", "U1-A13", "J1-D21") +
+  net("PL_DDR_D0", "U1-C1", "U3-A1") +
+  net("FLASH_DQ0", "U1-C2", "U3-A2") +
+  net("PROGRAM_B", "U1-C3", "R1-1") +
+  net("NetR1_2", "U1-C4", "R1-2") +
+  net("35_3_P", "U1-C5", "J1-D30") +
+  net("NC", "U1-C6") +
+  net("1V8", "L1-1") + net("NetC1_1", "L1-2", "U1-C7"), "detail.net");
+const detail = analyzeNetlists(detailCore, base, "U1", "J1", "P1");
+assert.equal(detail.core_internal.length, 3);
+assert.equal(detail.pending.length, 1);
+assert.equal(detail.unrouted.length, 2);
+assert.equal(detail.fpga_other.length, 1);
+const signals = pinMappingCsv(detail);
+for (const name of ["TX_FRAME_P", "PL_DDR_D0", "FLASH_DQ0", "PROGRAM_B"]) assert(signals.includes(name));
+for (const name of ["NetR1_2", "35_3_P", '"NC"', "NetC1_1"]) assert(!signals.includes(name));
+assert(pinMappingCsv(detail, true).includes("NetR1_2"));
+console.log("Internal FLASH/DDR, pending, floating and inductor supply classification passed");

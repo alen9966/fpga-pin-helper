@@ -1,8 +1,9 @@
 // Protel netlists carry electrical connectivity, not FPGA pin capabilities.
-function pinMappingCsv(report) {
-  const rows = [["底板功能", "PACKAGE_PIN"]];
+function pinMappingCsv(report, includePending = false) {
+  const rows = [[report.netlist_mode ? "信号功能" : "底板功能", "PACKAGE_PIN"]];
   const seen = new Set();
-  for (const row of report.matched || []) {
+  for (const row of [...(report.matched || []), ...(report.core_internal || []), ...(includePending ? report.pending || [] : [])]) {
+    if (["power", "floating"].includes(row.signal_scope)) continue;
     if (!row.function || !row.package_pin) continue;
     const key = JSON.stringify([row.function, row.package_pin]);
     if (seen.has(key)) continue;
@@ -76,17 +77,35 @@ function suggestNetlistRefs(core, base) {
   return { fpga, connector, baseConnector: baseCandidates[0]?.ref || "" };
 }
 
+function powerNetNames(netlist) {
+  const names = new Set(netlist.nets.filter(net => /^(?:[ADPS]?GND|GROUND|VCC|VDD|VSS|VEE|VBAT|PWR)(?:$|[_\d])/i.test(net.name) || /^\d+V\d*(?:$|_)/i.test(net.name) || /(?:^|_)VREF(?:_|$)/i.test(net.name) || /I\/O_V$/i.test(net.name)).map(net => net.name));
+  // Supply islands behind inductors remain supplies; do not traverse signal resistors.
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const ref of netlist.components.keys()) {
+      if (!/^L\d/i.test(ref)) continue;
+      const nets = netlistPins(netlist, ref).map(pin => netlist.byNode.get(ref + "-" + pin));
+      if (nets.length !== 2) continue;
+      if (!nets.some(net => names.has(net.name))) continue;
+      for (const net of nets) if (!names.has(net.name)) { names.add(net.name); changed = true; }
+    }
+  }
+  return names;
+}
+
 function analyzeNetlists(core, base, fpga, connector, baseConnector) {
   if (!core.components.has(fpga) || !core.components.has(connector) || !base.components.has(baseConnector)) throw new Error("请选择有效的 FPGA 和连接器位号");
   if (fpga === connector) throw new Error("FPGA 和核心板连接器不能是同一个器件");
   if (core.ambiguousComponents.has(fpga) || core.ambiguousComponents.has(connector) || base.ambiguousComponents.has(baseConnector)) throw new Error("所选 FPGA / 连接器存在重复位号，请先修正网表");
-  const matched = [], unrouted = [], baseOther = [], shared = [];
+  const matched = [], unrouted = [], baseOther = [], shared = [], internal = [], pending = [];
+  const corePower = powerNetNames(core), basePower = powerNetNames(base);
   const usedBase = new Set();
   const prefix = fpga + "-", connPrefix = connector + "-";
   for (const net of core.nets) {
     const fpgaNodes = net.nodes.filter(n => n.startsWith(prefix) && !core.ambiguousNodes.has(n));
     const connNodes = net.nodes.filter(n => n.startsWith(connPrefix) && !core.ambiguousNodes.has(n));
-    if (fpgaNodes.length > 1) {
+    if (corePower.has(net.name) && fpgaNodes.length) {
       const links = connNodes.map(n => {
         const baseNode = baseConnector + "-" + n.slice(connPrefix.length);
         const baseNet = base.byNode.get(baseNode);
@@ -96,6 +115,7 @@ function analyzeNetlists(core, base, fpga, connector, baseConnector) {
       const row = makeRow({ category: "fpga_other", function: net.name, core_silk: net.name,
         connector_pin: links.join(" · "), extra: fpgaNodes.concat(net.nodes.filter(n => !n.startsWith(prefix) && !n.startsWith(connPrefix))).join(" · ") });
       row.review_eligible = false;
+      row.signal_scope = "power";
       row.base_endpoints = [...new Set(connNodes.flatMap(n => base.byNode.get(baseConnector + "-" + n.slice(connPrefix.length))?.nodes || []))].join(" · ");
       row.core_node = fpgaNodes.join(" · ");
       shared.push(row);
@@ -108,18 +128,32 @@ function analyzeNetlists(core, base, fpga, connector, baseConnector) {
         const baseNode = baseConnector + "-" + pin;
         const baseNet = base.byNode.get(baseNode);
         if (!baseNet) continue;
+        if (basePower.has(baseNet.name)) continue;
+        const endpoints = baseNet.nodes.filter(n => !n.startsWith(baseConnector + "-") && !base.ambiguousNodes.has(n));
+        if (!endpoints.length) continue;
         connected = true; usedBase.add(baseNode);
-        const endpoints = baseNet.nodes.filter(n => !n.startsWith(baseConnector + "-"));
         const row = makeRow({ category: "matched", function: baseNet.name, package_pin: node.slice(prefix.length),
           connector_pin: `${connNode} ↔ ${baseNode}`, core_silk: net.name, extra: endpoints.join(" · ") });
         row.core_node = node;
+        row.signal_scope = "base";
         row.base_endpoints = endpoints.join(" · ");
         // Only conventional numbered GPIO net labels are eligible for PACKAGE_PIN review.
         // Netlists alone cannot establish IO names, banks, supplies, PS, or MGT capabilities.
         row.review_eligible = /^\d+_\d+(?:_(?:MRC|SRC|MRCC|SRCC))?(?:_[PN])?$/i.test(net.name);
         matched.push(row);
       }
-      if (!connected) unrouted.push(makeRow({ category: "unrouted", function: net.name, package_pin: node.slice(prefix.length), core_silk: net.name, extra: net.nodes.filter(n => n !== node).join(" · ") }));
+      if (!connected) {
+        const endpoints = net.nodes.filter(n => !n.startsWith(prefix) && !n.startsWith(connPrefix) && !core.ambiguousNodes.has(n));
+        const active = endpoints.some(n => /^(?:U|Y|Q|D|SW)\d/i.test(n));
+        const namedSignal = !/^(?:Net|Test[_\d])/i.test(net.name) && !/^\d+_/.test(net.name);
+        const scope = active || (namedSignal && endpoints.length) ? "internal" : endpoints.some(n => !/^(?:J|JP|TP)\d/i.test(n)) ? "pending" : "floating";
+        const category = scope === "internal" ? "core_internal" : scope === "pending" ? "pending" : "unrouted";
+        const row = makeRow({ category, function: net.name, package_pin: node.slice(prefix.length), core_silk: net.name, extra: endpoints.join(" · ") });
+        row.core_node = node;
+        row.signal_scope = scope;
+        row.review_eligible = false;
+        (scope === "internal" ? internal : scope === "pending" ? pending : unrouted).push(row);
+      }
     }
   }
   for (const pin of netlistPins(base, baseConnector)) {
@@ -129,8 +163,8 @@ function analyzeNetlists(core, base, fpga, connector, baseConnector) {
     baseOther.push(makeRow({ category: "base_other", function: net.name, connector_pin: node, extra: net.nodes.filter(n => n !== node).join(" · ") }));
   }
   if (!matched.length) throw new Error("所选器件之间没有同名连接器脚可匹配，请检查位号和连接器对接方式");
-  return { matched, unrouted, base_other: baseOther, fpga_other: shared, ps: [], banks: [],
-    stats: { matched: matched.length, unrouted: unrouted.length, base_other: baseOther.length, fpga_other: shared.length, ps: 0, core_pins: netlistPins(core, fpga).length, base_pins: netlistPins(base, baseConnector).length },
+  return { matched, core_internal: internal, pending, unrouted, base_other: baseOther, fpga_other: shared, ps: [], banks: [],
+    stats: { matched: matched.length, core_internal: internal.length, pending: pending.length, unrouted: unrouted.length, base_other: baseOther.length, fpga_other: shared.length, ps: 0, core_pins: netlistPins(core, fpga).length, base_pins: netlistPins(base, baseConnector).length },
     core_file: core.filename, base_file: base.filename, netlist_mode: true,
     detected: { guessed: false, fpga, connector, baseConnector } };
 }

@@ -26,6 +26,8 @@ let reviewFilter = "all";
 
 const CATEGORY_LABEL = {
   matched: "已连接",
+  core_internal: "核心板内部",
+  pending: "待确认",
   unrouted: "未引出",
   base_other: "底板其他",
   fpga_other: "核心板其他",
@@ -51,6 +53,8 @@ function allRows() {
   if (!report) return [];
   return [
     ...report.matched,
+    ...(report.core_internal || []),
+    ...(report.pending || []),
     ...report.unrouted,
     ...report.base_other,
     ...report.fpga_other,
@@ -137,7 +141,7 @@ function render() {
 
   const tokens = parseQuery(searchInput.value);
   const searching = tokens.length > 0;
-  const scopes = searching ? new Set(["matched", "unrouted", "base_other", "fpga_other"]) : selectedScopes;
+  const scopes = searching ? new Set(["matched", "core_internal", "pending", "unrouted", "base_other", "fpga_other"]) : selectedScopes;
   const rows = allRows().filter((row) => rowMatches(row, tokens, selectedBanks, scopes));
 
   tbody.innerHTML = rows
@@ -170,7 +174,7 @@ function render() {
   const d = report.detected;
   detectLine.textContent = `已识别：核心板「${report.core_file}」· 底板「${report.base_file}」` +
     (report.netlist_mode ? ` · ${d.fpga} → ${d.connector} ↔ ${d.baseConnector}（同名脚）` : d?.guessed ? "（按 IO 数量推断）" : "");
-  if (report.netlist_mode) statsLine.textContent = `直接连接 ${s.matched} 条　未接到底板 ${s.unrouted} 条　底板其他 ${s.base_other} 条　共享网络 ${s.fpga_other} 条　核心板 FPGA 已入网焊盘 ${s.core_pins} 个`;
+  if (report.netlist_mode) statsLine.textContent = `底板信号 ${s.matched} 条　核心板内部信号 ${s.core_internal} 条　待确认 ${s.pending} 条　悬空/仅测试点 ${s.unrouted} 条　电源/地 ${s.fpga_other} 个网络`;
   } catch (err) {
     showError("界面渲染失败：" + (err && err.message ? err.message : err));
   }
@@ -185,7 +189,13 @@ function acceptReport(data) {
   review = null;
   reviewWrap.classList.add("hidden");
   selectedBanks.clear();
-  selectedScopes = new Set(["matched"]);
+  selectedScopes = new Set(data.netlist_mode ? ["matched", "core_internal"] : ["matched"]);
+  document.getElementById("internalScope").classList.toggle("hidden", !data.netlist_mode);
+  document.getElementById("pendingScope").classList.toggle("hidden", !data.netlist_mode);
+  document.getElementById("pendingExportOption").classList.toggle("hidden", !data.netlist_mode);
+  document.getElementById("functionHeader").textContent = data.netlist_mode ? "信号功能" : "底板功能";
+  document.querySelector('[data-scope="unrouted"]').textContent = data.netlist_mode ? "悬空/测试点" : "未引出";
+  document.querySelector('[data-scope="fpga_other"]').textContent = data.netlist_mode ? "电源/地" : "核心板其他";
   searchInput.value = "";
   showError("");
   emptyHint.classList.add("hidden");
@@ -466,11 +476,12 @@ document.getElementById("downloadConnections").addEventListener("click", () => {
 
 document.getElementById("downloadPinMapping").addEventListener("click", () => {
   if (!report) return;
-  const url = URL.createObjectURL(new Blob([pinMappingCsv(report)], { type: "text/csv;charset=utf-8" }));
+  const includePending = report.netlist_mode && document.getElementById("includePendingExport").checked;
+  const url = URL.createObjectURL(new Blob([pinMappingCsv(report, includePending)], { type: "text/csv;charset=utf-8" }));
   const a = document.createElement("a");
   a.href = url;
-  a.download = "底板功能_PACKAGE_PIN.csv";
+  a.download = report.netlist_mode ? "信号功能_PACKAGE_PIN.csv" : "底板功能_PACKAGE_PIN.csv";
   a.click();
   URL.revokeObjectURL(url);
-  showToast("已导出全部已连接功能与 PACKAGE_PIN 两列");
+  showToast(includePending ? "已导出信号和待确认项，排除电源与悬空脚" : "已导出底板和核心板内部信号，排除电源、悬空及待确认项");
 });

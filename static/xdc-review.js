@@ -132,7 +132,7 @@ function reviewXdc(text, report) {
       allPins.add(pin);
     }
   }
-  for (const row of [...(report.unrouted || []), ...(report.fpga_other || [])]) {
+  for (const row of [...(report.unrouted || []), ...(report.fpga_other || []), ...(report.core_internal || []), ...(report.pending || [])]) {
     const pin = String(row.package_pin || "").toUpperCase();
     if (pin) allPins.add(pin);
   }

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>FPGA 引脚对照助手</title>
-  <link rel="stylesheet" href="static/style.css?v=0.5.2" />
+  <link rel="stylesheet" href="static/style.css?v=0.6.0" />
 </head>
 <body>
   <header class="top">
@@ -47,7 +47,7 @@
       <label>底板对应接口 <select id="netBaseConnector"></select></label>
       <button id="matchNetlists" class="btn" type="button" disabled>按同名脚生成连接表</button>
     </div>
-    <p class="hint">位号会自动推荐，请核实后生成。仅追踪同一网络的直接连接，不穿过电阻、电容或芯片；网表不含 IO 名称、BANK 或未连接焊盘。共享网络合并到「核心板其他」。约束核对只按常规数字 GPIO 网络标签核对连接，不能验证引脚类型或电压。</p>
+    <p class="hint">位号会自动推荐，请核实后生成。仅追踪同一网络的直接连接，不穿过电阻、电容或芯片；网表不含 IO 名称、BANK 或未连接焊盘。默认显示底板和核心板内部信号，电源、地和悬空脚默认隐藏；阻容用途不明的网络放在「待确认」。约束核对只按常规数字 GPIO 网络标签核对连接，不能验证引脚类型或电压。</p>
   </section>
   <section class="toolbar hidden" id="toolbar">
     <div class="detect" id="detectLine"></div>
@@ -59,6 +59,8 @@
       <div class="filter-group" id="bankFilters"></div>
       <div class="filter-group">
         <button class="chip on" data-scope="matched" type="button">已连接</button>
+        <button id="internalScope" class="chip hidden" data-scope="core_internal" type="button">核心板内部</button>
+        <button id="pendingScope" class="chip hidden" data-scope="pending" type="button">待确认</button>
         <button class="chip" data-scope="unrouted" type="button">未引出</button>
         <button class="chip" data-scope="base_other" type="button">底板其他</button>
         <button class="chip" data-scope="fpga_other" type="button">核心板其他</button>
@@ -66,7 +68,8 @@
     </div>
     <div class="stats" id="statsLine"></div>
     <button id="downloadConnections" class="btn ghost" type="button">下载连接表 CSV</button>
-    <button id="downloadPinMapping" class="btn" type="button">导出底板功能 → PACKAGE_PIN</button>
+    <button id="downloadPinMapping" class="btn" type="button">导出信号功能 → PACKAGE_PIN</button>
+    <label id="pendingExportOption" class="hidden"><input id="includePendingExport" type="checkbox" /> 导出时包含待确认信号（仅有阻容连接、用途未知）</label>
   </section>
 
   <main>
@@ -76,7 +79,7 @@
       <table>
         <thead>
           <tr>
-            <th>底板功能</th>
+            <th id="functionHeader">底板功能</th>
             <th>PACKAGE_PIN</th>
             <th>IO 名称</th>
             <th>BANK</th>
@@ -111,9 +114,9 @@
 
   <div id="toast" class="toast hidden"></div>
   <script src="static/xlsx.full.min.js"></script>
-  <script src="static/matcher.js?v=0.5.2"></script>
-  <script src="static/xdc-review.js?v=0.5.2"></script>
-  <script src="static/netlist.js?v=0.5.2"></script>
-  <script src="static/app.js?v=0.5.2"></script>
+  <script src="static/matcher.js?v=0.6.0"></script>
+  <script src="static/xdc-review.js?v=0.6.0"></script>
+  <script src="static/netlist.js?v=0.6.0"></script>
+  <script src="static/app.js?v=0.6.0"></script>
 </body>
 </html>

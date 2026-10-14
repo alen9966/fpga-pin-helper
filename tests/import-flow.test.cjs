@@ -44,7 +44,7 @@ function file(name, data) {
   assert.equal(report.detected.connector, "J8");
   assert.equal(report.detected.baseConnector, "U10");
   assert.equal(report.matched.length, actual.length ? 79 : 1);
-  assert.equal((page.get("tbody").innerHTML.match(/<tr>/g) || []).length, report.matched.length);
+  assert.equal((page.get("tbody").innerHTML.match(/<tr>/g) || []).length, report.matched.length + report.core_internal.length);
   assert(page.get("tbody").innerHTML.includes("TX_FRAME_P"));
   assert(!page.get("tbody").innerHTML.includes("0805C"));
   await assert.rejects(() => vm.runInContext("parseExcelFile({name:'wrong.NET'}, 'wrong.NET')", page.context), /网表/);
